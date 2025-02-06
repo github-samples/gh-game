@@ -3,8 +3,11 @@ package cointoss
 import (
 	"fmt"
 	"math/rand"
+	"os"
 	"strings"
 	"time"
+
+	ghprompt "github.com/cli/go-gh/v2/pkg/prompter"
 )
 
 func TossCoin() string {
@@ -24,18 +27,19 @@ func ValidateGuess(guess string) error {
 }
 
 func GetNextGuess() (string, bool) {
-	fmt.Print("Play again? Enter 'heads' or 'tails' (or 'quit' to end): ")
-	var answer string
-	fmt.Scanln(&answer)
+	options := []string{"Heads", "Tails", "Quit"}
+	p := ghprompt.New(os.Stdin, os.Stdout, os.Stderr)
 
-	if strings.ToLower(strings.TrimSpace(answer)) == "quit" {
+	answer, err := p.Select("What's your next guess? Heads, Tails or Quit?", "Heads", options)
+	if err != nil {
+		fmt.Println("Error reading input:", err)
 		return "", false
 	}
 
-	if err := ValidateGuess(answer); err != nil {
-		fmt.Println(err)
-		return GetNextGuess()
+	answerLower := strings.ToLower(strings.TrimSpace(options[answer]))
+	if answerLower == "quit" {
+		return "", false
 	}
 
-	return strings.ToLower(strings.TrimSpace(answer)), true
+	return answerLower, true
 }
