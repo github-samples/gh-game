@@ -6,6 +6,20 @@
 	"image": "mcr.microsoft.com/devcontainers/go:1-1.23-bookworm",
 	"features": {
 		"ghcr.io/devcontainers/features/github-cli:1": {}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"GitHub.codespaces",
+				"github.vscode-github-actions",
+				"GitHub.copilot",
+				"GitHub.copilot-chat",
+				"github.copilot-workspace",
+				"GitHub.vscode-pull-request-github",
+				"GitHub.remotehub",
+				"golang.Go"
+			]
+		}
 	}
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
