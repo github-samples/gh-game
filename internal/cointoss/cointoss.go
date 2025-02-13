@@ -7,8 +7,13 @@ import (
 	"strings"
 	"time"
 
-	ghprompt "github.com/cli/go-gh/v2/pkg/prompter"
+	userPrompt "github.com/cli/go-gh/v2/pkg/prompter"
 )
+
+// prompter interface allows us to mock the prompt functionality in tests
+type prompter interface {
+	Select(prompt string, defaultValue string, options []string) (int, error)
+}
 
 func TossCoin() string {
 	rand.Seed(time.Now().UnixNano())
@@ -27,8 +32,11 @@ func ValidateGuess(guess string) error {
 }
 
 func GetNextGuess() (string, bool) {
+	return GetNextGuessWithPrompter(userPrompt.New(os.Stdin, os.Stdout, os.Stderr))
+}
+
+func GetNextGuessWithPrompter(p prompter) (string, bool) {
 	options := []string{"Heads", "Tails", "Quit"}
-	p := ghprompt.New(os.Stdin, os.Stdout, os.Stderr)
 
 	answer, err := p.Select("What's your next guess? Heads, Tails or Quit?", "Heads", options)
 	if err != nil {
