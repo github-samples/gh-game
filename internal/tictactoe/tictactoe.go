@@ -14,6 +14,11 @@ type Prompter interface {
 	Select(prompt, defaultValue string, options []string) (int, error)
 }
 
+// GameInterface defines the methods needed for GetPlayerMove
+type GameInterface interface {
+	GetAvailablePositions() []string
+}
+
 // Board represents a 3x3 Tic-tac-toe game board.
 // Empty squares are represented by empty strings,
 // and played squares contain either "X" or "O".
@@ -43,11 +48,9 @@ func (g *Game) MakeMove(rowIndex, columnIndex int) error {
 	if rowIndex < 0 || rowIndex > 2 || columnIndex < 0 || columnIndex > 2 {
 		return errors.New("invalid position: must be between 0 and 2")
 	}
-
 	if g.board[rowIndex][columnIndex] != "" {
 		return errors.New("position already taken")
 	}
-
 	g.board[rowIndex][columnIndex] = g.CurrentPlayer
 	g.CurrentPlayer = switchPlayer(g.CurrentPlayer)
 	return nil
@@ -97,6 +100,7 @@ func (g *Game) GetWinner() string {
 // IsBoardFull determines if all positions on the board have been played.
 // Returns true if no empty positions remain, false otherwise.
 func (g *Game) IsBoardFull() bool {
+
 	for rowIndex := 0; rowIndex < 3; rowIndex++ {
 		for columnIndex := 0; columnIndex < 3; columnIndex++ {
 			if g.board[rowIndex][columnIndex] == "" {
@@ -158,14 +162,18 @@ func switchPlayer(currentPlayer string) string {
 // 1 2 3
 // 4 5 6
 // 7 8 9
+// Returns (-1, -1) for invalid positions (0 or >9)
 func positionToRowCol(position int) (rowIndex, columnIndex int) {
+	if position <= 0 || position > 9 {
+		return -1, -1
+	}
 	position-- // Convert to 0-based index
 	return position / 3, position % 3
 }
 
-// getAvailablePositions returns a slice of strings representing unoccupied positions.
+// GetAvailablePositions returns a slice of strings representing unoccupied positions.
 // The positions are numbered 1-9 (one-based) to match the display format.
-func (g *Game) getAvailablePositions() []string {
+func (g *Game) GetAvailablePositions() []string {
 	var availablePositions []string
 	for position := 1; position <= 9; position++ {
 		rowIndex, columnIndex := positionToRowCol(position)
@@ -182,27 +190,31 @@ func (g *Game) getAvailablePositions() []string {
 // - No valid moves are available (board is full)
 // - User input is invalid
 // - Selected position is invalid
-func GetPlayerMove(prompter Prompter, game *Game) (rowIndex, columnIndex int, err error) {
-	availablePositions := game.getAvailablePositions()
+func GetPlayerMove(prompter Prompter, game GameInterface) (rowIndex, columnIndex int, err error) {
+	availablePositions := game.GetAvailablePositions()
 	if len(availablePositions) == 0 {
-		return 0, 0, errors.New("no available moves")
+		return -1, -1, errors.New("no available moves")
 	}
 
-	posIndex, err := prompter.Select("Select position (1-9):", availablePositions[0], availablePositions)
+	posIndex, err := prompter.Select("Select position (1-9):", "1", availablePositions)
 	if err != nil {
-		return 0, 0, err
+		return -1, -1, err
 	}
 
 	if posIndex < 0 || posIndex >= len(availablePositions) {
-		return 0, 0, fmt.Errorf("invalid position selection: %d", posIndex)
+		return -1, -1, fmt.Errorf("invalid position selection: %d", posIndex)
 	}
 
 	var position int
 	_, err = fmt.Sscanf(availablePositions[posIndex], "%d", &position)
 	if err != nil {
-		return 0, 0, fmt.Errorf("invalid position value: %v", err)
+		return -1, -1, fmt.Errorf("invalid position value: %v", err)
 	}
 
 	rowIndex, columnIndex = positionToRowCol(position)
+	if rowIndex < 0 || columnIndex < 0 {
+		return -1, -1, fmt.Errorf("invalid position value: %d", position)
+	}
+
 	return rowIndex, columnIndex, nil
 }
