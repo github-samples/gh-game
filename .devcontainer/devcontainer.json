@@ -10,7 +10,14 @@
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"github.vscode-github-actions"
+				"GitHub.codespaces",
+				"github.vscode-github-actions",
+				"GitHub.copilot",
+				"GitHub.copilot-chat",
+				"github.copilot-workspace",
+				"GitHub.vscode-pull-request-github",
+				"GitHub.remotehub",
+				"golang.Go"
 			]
 		}
 	}
