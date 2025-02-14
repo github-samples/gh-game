@@ -20,6 +20,16 @@ gh game cointoss heads  # or tails
 
 The game will continue as long as you keep guessing correctly, allowing you to build up a streak. You can quit at any time by selecting "Quit" when prompted for your next guess.
 
+### Tic Tac Toe
+
+Play the classic game of Tic Tac Toe against another player. Players take turns placing X's and O's on a 3x3 grid, trying to get three in a row horizontally, vertically, or diagonally.
+
+```sh
+gh game tictactoe
+```
+
+The game provides an interactive interface where you can select positions on the board using numbers 1-9, corresponding to the grid positions from left to right, top to bottom.
+
 ### Whoami
 
 Display information about the currently authenticated GitHub user.
