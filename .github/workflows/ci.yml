@@ -6,6 +6,8 @@ permissions:
 on:
   pull_request:
     branches: [ main ]
+  push: 
+    branches: [ main ]
   
 
 jobs:
@@ -17,7 +19,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23' # You can change this to your desired Go version
+          go-version: '1.24' # You can change this to your desired Go version
 
       - name: Build
         run: go build -v ./...
