@@ -17,4 +17,5 @@ func Execute() error {
 func init() {
 	rootCmd.AddCommand(whoamiCmd)
 	rootCmd.AddCommand(cointossCmd)
+	rootCmd.AddCommand(tictactoeCmd)
 }
