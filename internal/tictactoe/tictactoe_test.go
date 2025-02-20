@@ -35,7 +35,7 @@ func (m *mockGame) GetAvailablePositions() []string {
 
 // Helper functions
 func setupGameWithMoves(moves [][2]int) *Game {
-	game := NewGame()
+	game := NewGame(LocalGame)
 	for _, move := range moves {
 		game.MakeMove(move[0], move[1])
 	}
@@ -61,30 +61,52 @@ type gameTestCase struct {
 
 func TestNewGame(t *testing.T) {
 	tests := []struct {
-		name               string
-		expectedPlayer     string
-		expectedBoardEmpty bool
+		name           string
+		mode           GameMode
+		wantPlayer     string
+		wantMode       GameMode
+		wantCompMark   string
+		expectComputer bool
 	}{
 		{
-			name:               "new game starts with player X",
-			expectedPlayer:     "X",
-			expectedBoardEmpty: true,
+			name:           "local multiplayer game",
+			mode:           LocalGame,
+			wantPlayer:     "X",
+			wantMode:       LocalGame,
+			wantCompMark:   "",
+			expectComputer: false,
+		},
+		{
+			name:           "computer game",
+			mode:           ComputerGame,
+			wantPlayer:     "X",
+			wantMode:       ComputerGame,
+			wantCompMark:   "O",
+			expectComputer: true,
 		},
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			game := NewGame()
-			if game.CurrentPlayer != tt.expectedPlayer {
-				t.Errorf("Expected first player to be %s, got %s", tt.expectedPlayer, game.CurrentPlayer)
+			game := NewGame(tt.mode)
+
+			if game.CurrentPlayer != tt.wantPlayer {
+				t.Errorf("NewGame() CurrentPlayer = %v, want %v", game.CurrentPlayer, tt.wantPlayer)
 			}
-			if tt.expectedBoardEmpty {
-				for i := 0; i < 3; i++ {
-					for j := 0; j < 3; j++ {
-						if game.board[i][j] != "" {
-							t.Errorf("Expected empty board at position (%d,%d), got %s", i, j, game.board[i][j])
-						}
+
+			if game.Mode != tt.wantMode {
+				t.Errorf("NewGame() Mode = %v, want %v", game.Mode, tt.wantMode)
+			}
+
+			if game.ComputerMark != tt.wantCompMark {
+				t.Errorf("NewGame() ComputerMark = %v, want %v", game.ComputerMark, tt.wantCompMark)
+			}
+
+			// Verify board is empty
+			for i := 0; i < 3; i++ {
+				for j := 0; j < 3; j++ {
+					if game.board[i][j] != "" {
+						t.Errorf("Expected empty board at position (%d,%d), got %s", i, j, game.board[i][j])
 					}
 				}
 			}
@@ -122,7 +144,7 @@ func TestMakeMove(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			game := NewGame()
+			game := NewGame(LocalGame)
 			var lastErr error
 
 			for _, move := range tt.moves {
@@ -212,7 +234,7 @@ func TestGetWinner(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			game := NewGame()
+			game := NewGame(LocalGame)
 			for _, move := range tt.moves {
 				game.MakeMove(move[0], move[1])
 			}
@@ -258,7 +280,7 @@ func TestIsBoardFull(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			game := NewGame()
+			game := NewGame(LocalGame)
 			for _, move := range tt.moves {
 				err := game.MakeMove(move[0], move[1])
 				if err != nil {
@@ -299,7 +321,7 @@ func TestGetPlayerMove(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			game := NewGame()
+			game := NewGame(LocalGame)
 			for _, move := range tt.boardState {
 				game.MakeMove(move[0], move[1])
 			}
@@ -341,13 +363,13 @@ func TestGetPlayerMoveErrors(t *testing.T) {
 		},
 		{
 			name:          "invalid position selection",
-			game:          NewGame(),
+			game:          NewGame(LocalGame),
 			selectAnswers: []int{9},
 			expectedError: "invalid position",
 		},
 		{
 			name:          "prompter error is propagated",
-			game:          NewGame(),
+			game:          NewGame(LocalGame),
 			selectError:   fmt.Errorf("prompter error"),
 			expectedError: "prompter error",
 		},
@@ -359,7 +381,7 @@ func TestGetPlayerMoveErrors(t *testing.T) {
 		},
 		{
 			name:          "negative position selection",
-			game:          NewGame(),
+			game:          NewGame(LocalGame),
 			selectAnswers: []int{-1},
 			expectedError: "invalid position",
 		},
@@ -547,39 +569,55 @@ func TestGetAvailablePositions(t *testing.T) {
 
 func TestString(t *testing.T) {
 	tests := []struct {
-		name           string
-		moves          [][2]int
-		expectedPieces []string
+		name              string
+		moves             [][2]int
+		expectedPositions []string
+		expectedMarks     map[string]bool // Check for presence of colored X and O
 	}{
 		{
-			name:           "empty board",
-			moves:          [][2]int{},
-			expectedPieces: []string{" ", " ", " ", " ", " ", " ", " ", " ", " "},
+			name:              "empty board shows all positions",
+			moves:             [][2]int{},
+			expectedPositions: []string{"1", "2", "3", "4", "5", "6", "7", "8", "9"},
+			expectedMarks:     map[string]bool{},
 		},
 		{
-			name:           "X in center",
-			moves:          [][2]int{{1, 1}},
-			expectedPieces: []string{" ", " ", " ", " ", "X", " ", " ", " ", " "},
+			name:              "X in center shows colored X",
+			moves:             [][2]int{{1, 1}},
+			expectedPositions: []string{"1", "2", "3", "4", "6", "7", "8", "9"},
+			expectedMarks: map[string]bool{
+				xStyle.Render("X"): true,
+			},
 		},
 		{
-			name: "multiple moves",
+			name: "multiple moves show colored X and O",
 			moves: [][2]int{
 				{0, 0}, // X top-left
 				{1, 1}, // O center
 			},
-			expectedPieces: []string{"X", " ", " ", " ", "O", " ", " ", " ", " "},
+			expectedPositions: []string{"2", "3", "4", "6", "7", "8", "9"},
+			expectedMarks: map[string]bool{
+				xStyle.Render("X"): true,
+				oStyle.Render("O"): true,
+			},
 		},
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			game := setupGameWithMoves(tt.moves)
 			board := game.String()
 
-			for i, piece := range tt.expectedPieces {
-				if piece != " " && !strings.Contains(board, piece) {
-					t.Errorf("Expected piece %s at position %d in board string", piece, i+1)
+			// Check that expected position numbers are present
+			for _, pos := range tt.expectedPositions {
+				if !strings.Contains(board, pos) {
+					t.Errorf("Expected position %s to be present in board", pos)
+				}
+			}
+
+			// Check that expected colored marks are present
+			for mark := range tt.expectedMarks {
+				if !strings.Contains(board, mark) {
+					t.Errorf("Expected colored mark %q to be present in board", mark)
 				}
 			}
 		})
@@ -614,6 +652,315 @@ func TestSwitchPlayer(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if next := switchPlayer(tt.current); next != tt.expected {
 				t.Errorf("Expected %s after %s, got %s", tt.expected, tt.current, next)
+			}
+		})
+	}
+}
+
+func TestIsComputerTurn(t *testing.T) {
+	tests := []struct {
+		name          string
+		mode          GameMode
+		currentPlayer string
+		computerMark  string
+		want          bool
+	}{
+		{
+			name:          "computer's turn in computer game",
+			mode:          ComputerGame,
+			currentPlayer: "O",
+			computerMark:  "O",
+			want:          true,
+		},
+		{
+			name:          "player's turn in computer game",
+			mode:          ComputerGame,
+			currentPlayer: "X",
+			computerMark:  "O",
+			want:          false,
+		},
+		{
+			name:          "O's turn in local game",
+			mode:          LocalGame,
+			currentPlayer: "O",
+			computerMark:  "",
+			want:          false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			game := &Game{
+				Mode:          tt.mode,
+				CurrentPlayer: tt.currentPlayer,
+				ComputerMark:  tt.computerMark,
+			}
+			if got := game.IsComputerTurn(); got != tt.want {
+				t.Errorf("IsComputerTurn() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGetComputerMove(t *testing.T) {
+	tests := []struct {
+		name         string
+		board        Board
+		computerMark string
+		wantWin      bool         // If true, computer should find a winning move
+		wantBlock    bool         // If true, computer should find a blocking move
+		wantCenter   bool         // If true, computer should take center
+		wantCorner   bool         // If true, computer should take a corner
+		notWantPos   [][2]int     // Positions that should not be selected
+		allowedPos   map[int]bool // Map of allowed row*3+col positions
+	}{
+		{
+			name: "computer finds winning move",
+			board: Board{
+				{"O", "O", ""},
+				{"", "", ""},
+				{"", "", ""},
+			},
+			computerMark: "O",
+			wantWin:      true,
+			allowedPos: map[int]bool{
+				2: true, // position (0,2)
+			},
+		},
+		{
+			name: "computer blocks opponent win",
+			board: Board{
+				{"X", "X", ""},
+				{"", "", ""},
+				{"", "", ""},
+			},
+			computerMark: "O",
+			wantBlock:    true,
+			allowedPos: map[int]bool{
+				2: true, // position (0,2)
+			},
+		},
+		{
+			name: "computer takes center when available",
+			board: Board{
+				{"X", "", ""},
+				{"", "", ""},
+				{"", "", ""},
+			},
+			computerMark: "O",
+			wantCenter:   true,
+			allowedPos: map[int]bool{
+				4: true, // position (1,1)
+			},
+		},
+		{
+			name: "computer takes corner when center taken",
+			board: Board{
+				{"", "", ""},
+				{"", "X", ""},
+				{"", "", ""},
+			},
+			computerMark: "O",
+			wantCorner:   true,
+			notWantPos:   [][2]int{{1, 1}}, // Don't take center
+		},
+		{
+			name: "computer takes any available space when no better options",
+			board: Board{
+				{"X", "O", "X"},
+				{"X", "O", ""},
+				{"O", "X", "X"},
+			},
+			computerMark: "O",
+			allowedPos: map[int]bool{
+				5: true, // only position (1,2) is available
+			},
+		},
+		{
+			name: "computer takes any available middle edge when no better options",
+			board: Board{
+				{"X", "O", "X"},
+				{"", "X", "O"},
+				{"O", "X", "X"},
+			},
+			computerMark: "O",
+			allowedPos: map[int]bool{
+				3: true, // only position (1,0) is available
+			},
+		},
+		{
+			name: "computer takes last available space",
+			board: Board{
+				{"X", "O", "X"},
+				{"O", "X", "O"},
+				{"X", "", "X"},
+			},
+			computerMark: "O",
+			allowedPos: map[int]bool{
+				7: true, // only position (2,1) is available
+			},
+		},
+		{
+			name: "computer tries all strategies before taking edge",
+			board: Board{
+				{"X", "", "X"},
+				{"", "O", ""},
+				{"X", "", "O"},
+			},
+			computerMark: "O",
+			allowedPos: map[int]bool{
+				1: true, // Position (0,1) - edge position
+			},
+			notWantPos: [][2]int{
+				{1, 1},                         // center already taken
+				{0, 0}, {0, 2}, {2, 0}, {2, 2}, // corners already taken or blocked
+			},
+		},
+		{
+			name: "computer systematically checks all positions",
+			board: Board{
+				{"X", "O", "X"},
+				{"X", "O", "X"},
+				{"", "X", "O"},
+			},
+			computerMark: "O",
+			allowedPos: map[int]bool{
+				6: true, // Position (2,0) should be the first empty space found
+			},
+		},
+		{
+			name: "computer takes middle edge when all other strategies fail",
+			board: Board{
+				{"X", "", "O"},
+				{"", "X", "X"},
+				{"O", "X", "O"},
+			},
+			computerMark: "O",
+			allowedPos: map[int]bool{
+				1: true, // Position (0,1) is the only strategic move left
+			},
+		},
+		{
+			name: "computer takes first available space when all other options exhausted",
+			board: Board{
+				{"X", "", "O"},
+				{"X", "O", "X"},
+				{"O", "X", ""},
+			},
+			computerMark: "O",
+			allowedPos: map[int]bool{
+				1: true, // Position (0,1) should be taken as it's the first available space
+			},
+		},
+		{
+			name: "computer takes last remaining position",
+			board: Board{
+				{"X", "O", "X"},
+				{"O", "X", "O"},
+				{"O", "X", ""},
+			},
+			computerMark: "O",
+			allowedPos: map[int]bool{
+				8: true, // Position (2,2) is the only remaining space
+			},
+		},
+		{
+			name: "computer takes first empty space in first row",
+			board: Board{
+				{"", "O", "X"},
+				{"X", "O", "X"},
+				{"O", "X", "O"},
+			},
+			computerMark: "O",
+			allowedPos: map[int]bool{
+				0: true, // Position (0,0)
+			},
+		},
+		{
+			name: "computer takes first empty space in second row",
+			board: Board{
+				{"X", "O", "X"},
+				{"", "O", "X"},
+				{"O", "X", "O"},
+			},
+			computerMark: "O",
+			allowedPos: map[int]bool{
+				3: true, // Position (1,0)
+			},
+		},
+		{
+			name: "computer must take edge when no other options exist",
+			board: Board{
+				{"X", "", "O"}, // corners taken
+				{"", "X", ""},  // center taken
+				{"O", "", "X"}, // corners taken
+			},
+			computerMark: "O",
+			notWantPos: [][2]int{
+				{0, 0}, {0, 2}, // top corners blocked
+				{1, 1},         // center blocked
+				{2, 0}, {2, 2}, // bottom corners blocked
+			},
+			allowedPos: map[int]bool{
+				1: true, // (0,1)
+				3: true, // (1,0)
+				5: true, // (1,2)
+				7: true, // (2,1)
+			},
+		},
+		{
+			name: "computer returns (-1,-1) when board is full",
+			board: Board{
+				{"X", "O", "X"},
+				{"O", "X", "O"},
+				{"O", "X", "O"},
+			},
+			computerMark: "O",
+			// No allowed positions as board is full
+			// Should return (-1, -1)
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			game := &Game{
+				board:        tt.board,
+				ComputerMark: tt.computerMark,
+			}
+
+			row, col := game.GetComputerMove()
+
+			// Special case for full board
+			if tt.name == "computer returns (-1,-1) when board is full" {
+				if row != -1 || col != -1 {
+					t.Errorf("GetComputerMove() with full board returned (%d,%d), want (-1,-1)", row, col)
+				}
+				return
+			}
+
+			// Check if position is in allowed positions when specified
+			if len(tt.allowedPos) > 0 {
+				pos := row*3 + col
+				if !tt.allowedPos[pos] {
+					t.Errorf("GetComputerMove() returned (%d,%d), position not in allowed set", row, col)
+				}
+			}
+
+			// Check that move is not in not-wanted positions
+			for _, notWant := range tt.notWantPos {
+				if row == notWant[0] && col == notWant[1] {
+					t.Errorf("GetComputerMove() returned (%d,%d), position should be avoided", row, col)
+				}
+			}
+
+			// Verify move is valid
+			if row < 0 || row > 2 || col < 0 || col > 2 {
+				t.Errorf("GetComputerMove() returned invalid position (%d,%d)", row, col)
+			}
+
+			// Verify position is empty
+			if game.board[row][col] != "" {
+				t.Errorf("GetComputerMove() returned occupied position (%d,%d)", row, col)
 			}
 		})
 	}
