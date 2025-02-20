@@ -20,6 +20,19 @@ gh game cointoss heads  # or tails
 
 The game will continue as long as you keep guessing correctly, allowing you to build up a streak. You can quit at any time by selecting "Quit" when prompted for your next guess.
 
+### Rock Paper Scissors
+
+Play Rock Paper Scissors against the computer. Best of 3, 5, 7, or 9 rounds.
+
+```sh
+gh game rockpaperscissors
+```
+
+Choose your move (rock, paper, or scissors) in each round, and the computer will randomly select its move. The game follows standard Rock Paper Scissors rules:
+- Rock crushes Scissors
+- Scissors cuts Paper
+- Paper covers Rock
+
 ### Tic Tac Toe
 
 Play the classic game of Tic Tac Toe against another player. Players take turns placing X's and O's on a 3x3 grid, trying to get three in a row horizontally, vertically, or diagonally.
