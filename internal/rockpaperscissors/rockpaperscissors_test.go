@@ -1,6 +1,7 @@
 package rockpaperscissors
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -221,4 +222,192 @@ func TestGame_isGameOver(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGame_updateScore(t *testing.T) {
+	tests := []struct {
+		name              string
+		winner            string
+		wantPlayerScore   int
+		wantComputerScore int
+	}{
+		{
+			name:              "Player wins",
+			winner:            "player",
+			wantPlayerScore:   1,
+			wantComputerScore: 0,
+		},
+		{
+			name:              "Computer wins",
+			winner:            "computer",
+			wantPlayerScore:   0,
+			wantComputerScore: 1,
+		},
+		{
+			name:              "Draw",
+			winner:            "draw",
+			wantPlayerScore:   0,
+			wantComputerScore: 0,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := &Game{
+				Winner: tt.winner,
+			}
+			g.updateScore()
+			if g.PlayerScore != tt.wantPlayerScore {
+				t.Errorf("updateScore() PlayerScore = %v, want %v", g.PlayerScore, tt.wantPlayerScore)
+			}
+			if g.ComputerScore != tt.wantComputerScore {
+				t.Errorf("updateScore() ComputerScore = %v, want %v", g.ComputerScore, tt.wantComputerScore)
+			}
+		})
+	}
+}
+
+func TestGame_getGameOverMessage(t *testing.T) {
+	tests := []struct {
+		name            string
+		playerScore     int
+		computerScore   int
+		wantMsgContains string
+	}{
+		{
+			name:            "Player wins",
+			playerScore:     2,
+			computerScore:   1,
+			wantMsgContains: "You win the match",
+		},
+		{
+			name:            "Computer wins",
+			playerScore:     1,
+			computerScore:   2,
+			wantMsgContains: "Computer wins the match",
+		},
+		{
+			name:            "Draw",
+			playerScore:     1,
+			computerScore:   1,
+			wantMsgContains: "The match is a draw",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := &Game{
+				PlayerScore:   tt.playerScore,
+				ComputerScore: tt.computerScore,
+			}
+			got := g.getGameOverMessage()
+			if got == "" {
+				t.Error("getGameOverMessage() returned empty string")
+			}
+			if !contains(got, tt.wantMsgContains) {
+				t.Errorf("getGameOverMessage() = %v, want it to contain %v", got, tt.wantMsgContains)
+			}
+		})
+	}
+}
+
+// MockPrompter implements the Prompter interface for testing
+type MockPrompter struct {
+	selectReturn int
+	selectError  error
+}
+
+func (m *MockPrompter) Select(prompt, defaultValue string, options []string) (int, error) {
+	return m.selectReturn, m.selectError
+}
+
+type mockPromptSequence struct {
+	returns []int
+	errors  []error
+	index   int
+}
+
+func (m *mockPromptSequence) Select(prompt, defaultValue string, options []string) (int, error) {
+	if m.index >= len(m.returns) {
+		return 0, nil
+	}
+	ret := m.returns[m.index]
+	err := m.errors[m.index]
+	m.index++
+	return ret, err
+}
+
+func TestPlayGame(t *testing.T) {
+	tests := []struct {
+		name         string
+		prompter     Prompter
+		wantGameOver bool
+	}{
+		{
+			name: "Complete game sequence",
+			prompter: &mockPromptSequence{
+				returns: []int{1, 0, 0, 0}, // Select 5 rounds, then rock three times
+				errors:  []error{nil, nil, nil, nil},
+			},
+			wantGameOver: true,
+		},
+		{
+			name: "Error on rounds selection",
+			prompter: &mockPromptSequence{
+				returns: []int{0},
+				errors:  []error{fmt.Errorf("mock error")},
+			},
+			wantGameOver: true,
+		},
+		{
+			name: "Error on move selection",
+			prompter: &mockPromptSequence{
+				returns: []int{0, 0},
+				errors:  []error{nil, fmt.Errorf("mock error")},
+			},
+			wantGameOver: true,
+		},
+		{
+			name: "Invalid round index",
+			prompter: &mockPromptSequence{
+				returns: []int{99, 3}, // Invalid round index, then exit
+				errors:  []error{nil, nil},
+			},
+			wantGameOver: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			PlayGame(tt.prompter)
+		})
+	}
+}
+
+func TestParseInt(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  int
+	}{
+		{
+			name:  "Valid number",
+			input: "5",
+			want:  5,
+		},
+		{
+			name:  "Invalid input returns default",
+			input: "invalid",
+			want:  3,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := parseInt(tt.input); got != tt.want {
+				t.Errorf("parseInt() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && s[0:len(substr)] == substr
 }
