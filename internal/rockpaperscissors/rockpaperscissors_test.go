@@ -347,7 +347,6 @@ func TestPlayGame(t *testing.T) {
 				returns: []int{1, 0, 0, 0}, // Select 5 rounds, then rock three times
 				errors:  []error{nil, nil, nil, nil},
 			},
-			wantGameOver: true,
 		},
 		{
 			name: "Error on rounds selection",
@@ -355,7 +354,6 @@ func TestPlayGame(t *testing.T) {
 				returns: []int{0},
 				errors:  []error{fmt.Errorf("mock error")},
 			},
-			wantGameOver: true,
 		},
 		{
 			name: "Error on move selection",
@@ -363,7 +361,6 @@ func TestPlayGame(t *testing.T) {
 				returns: []int{0, 0},
 				errors:  []error{nil, fmt.Errorf("mock error")},
 			},
-			wantGameOver: true,
 		},
 		{
 			name: "Invalid round index",
@@ -371,7 +368,6 @@ func TestPlayGame(t *testing.T) {
 				returns: []int{99, 3}, // Invalid round index, then exit
 				errors:  []error{nil, nil},
 			},
-			wantGameOver: true,
 		},
 	}
 
@@ -397,6 +393,26 @@ func TestParseInt(t *testing.T) {
 			name:  "Invalid input returns default",
 			input: "invalid",
 			want:  3,
+		},
+		{
+			name:  "Empty input returns default",
+			input: "",
+			want:  3,
+		},
+		{
+			name:  "Negative number returns default",
+			input: "-1",
+			want:  3,
+		},
+		{
+			name:  "Zero returns default",
+			input: "0",
+			want:  3,
+		},
+		{
+			name:  "Even number returns next odd number",
+			input: "4",
+			want:  5,
 		},
 	}
 	for _, tt := range tests {

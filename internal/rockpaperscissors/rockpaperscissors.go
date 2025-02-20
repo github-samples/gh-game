@@ -170,5 +170,11 @@ func PlayGame(prompter Prompter) {
 func parseInt(s string) int {
 	val := 3 // Default value
 	fmt.Sscanf(s, "%d", &val)
+	if val <= 0 {
+		return 3
+	}
+	if val%2 == 0 {
+		val++ // Convert even numbers to next odd number
+	}
 	return val
 }
