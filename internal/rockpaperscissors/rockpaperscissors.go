@@ -3,6 +3,7 @@ package rockpaperscissors
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 )
 
@@ -119,11 +120,26 @@ func (g *Game) isGameOver() bool {
 // getGameOverMessage returns the message to display when the game is over.
 func (g *Game) getGameOverMessage() string {
 	if g.PlayerScore > g.ComputerScore {
-		return fmt.Sprintf("You win the match! Final score: Player %d - Computer %d", g.PlayerScore, g.ComputerScore)
+		return fmt.Sprintf("GAME OVER: Player WINS (%d - %d)", g.PlayerScore, g.ComputerScore)
 	} else if g.ComputerScore > g.PlayerScore {
-		return fmt.Sprintf("Computer wins the match! Final score: Player %d - Computer %d", g.PlayerScore, g.ComputerScore)
+		return fmt.Sprintf("GAME OVER: Player LOSES (%d - %d)", g.PlayerScore, g.ComputerScore)
 	}
-	return fmt.Sprintf("The match is a draw! Final score: Player %d - Computer %d", g.PlayerScore, g.ComputerScore)
+	return fmt.Sprintf("GAME OVER: DRAW (%d - %d)", g.PlayerScore, g.ComputerScore)
+}
+
+// getRoundResultMessage returns a concise message about the round result
+func (g *Game) getRoundResultMessage() string {
+	// Capitalize the first letter of choices for better display
+	playerChoice := strings.Title(g.PlayerChoice)
+	computerChoice := strings.Title(g.ComputerChoice)
+
+	if g.Winner == "draw" {
+		return fmt.Sprintf("Draw! Player (%s) - CPU (%s)", playerChoice, computerChoice)
+	} else if g.Winner == "player" {
+		return fmt.Sprintf("Player (%s) beats CPU (%s)", playerChoice, computerChoice)
+	} else {
+		return fmt.Sprintf("Player (%s) loses to CPU (%s)", playerChoice, computerChoice)
+	}
 }
 
 // PlayGame plays a game of Rock Paper Scissors.
@@ -159,9 +175,8 @@ func PlayGame(prompter Prompter) {
 			break
 		}
 
-		fmt.Printf("You chose: %s\n", game.PlayerChoice)
-		fmt.Printf("Computer chose: %s\n", game.ComputerChoice)
-		fmt.Printf("Round result: %s wins!\n", game.Winner)
+		// Display a more concise round result
+		fmt.Println(game.getRoundResultMessage())
 	}
 	fmt.Println(game.GameOverMessage)
 }
