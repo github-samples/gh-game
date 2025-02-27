@@ -277,19 +277,19 @@ func TestGame_getGameOverMessage(t *testing.T) {
 			name:            "Player wins",
 			playerScore:     2,
 			computerScore:   1,
-			wantMsgContains: "You win the match",
+			wantMsgContains: "GAME OVER: Player WINS",
 		},
 		{
 			name:            "Computer wins",
 			playerScore:     1,
 			computerScore:   2,
-			wantMsgContains: "Computer wins the match",
+			wantMsgContains: "GAME OVER: Player LOSES",
 		},
 		{
 			name:            "Draw",
 			playerScore:     1,
 			computerScore:   1,
-			wantMsgContains: "The match is a draw",
+			wantMsgContains: "GAME OVER: DRAW",
 		},
 	}
 	for _, tt := range tests {
