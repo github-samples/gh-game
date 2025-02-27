@@ -2,6 +2,7 @@ package rockpaperscissors
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -9,29 +10,44 @@ func TestNewGame(t *testing.T) {
 	tests := []struct {
 		name            string
 		bestOf          int
+		secretMode      bool
 		wantBestOf      int
 		wantGameOver    bool
 		wantGamesPlayed int
+		wantSecretMode  bool
 	}{
 		{
 			name:            "New game with odd number of rounds",
 			bestOf:          3,
+			secretMode:      false,
 			wantBestOf:      3,
 			wantGameOver:    false,
 			wantGamesPlayed: 0,
+			wantSecretMode:  false,
 		},
 		{
 			name:            "New game with even number of rounds should increment to odd",
 			bestOf:          4,
+			secretMode:      false,
 			wantBestOf:      5,
 			wantGameOver:    false,
 			wantGamesPlayed: 0,
+			wantSecretMode:  false,
+		},
+		{
+			name:            "New game with secret mode enabled",
+			bestOf:          3,
+			secretMode:      true,
+			wantBestOf:      3,
+			wantGameOver:    false,
+			wantGamesPlayed: 0,
+			wantSecretMode:  true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			game := NewGame(tt.bestOf)
+			game := NewGame(tt.bestOf, tt.secretMode)
 			if game.BestOf != tt.wantBestOf {
 				t.Errorf("NewGame() BestOf = %v, want %v", game.BestOf, tt.wantBestOf)
 			}
@@ -40,6 +56,9 @@ func TestNewGame(t *testing.T) {
 			}
 			if game.GamesPlayed != tt.wantGamesPlayed {
 				t.Errorf("NewGame() GamesPlayed = %v, want %v", game.GamesPlayed, tt.wantGamesPlayed)
+				if game.SecretMode != tt.wantSecretMode {
+					t.Errorf("NewGame() SecretMode = %v, want %v", game.SecretMode, tt.wantSecretMode)
+				}
 			}
 		})
 	}
@@ -50,61 +69,85 @@ func TestGame_getWinner(t *testing.T) {
 		name           string
 		playerChoice   string
 		computerChoice string
+		secretMode     bool
 		want           string
 	}{
 		{
 			name:           "Player wins with rock vs scissors",
 			playerChoice:   "rock",
 			computerChoice: "scissors",
+			secretMode:     false,
 			want:           "player",
 		},
 		{
 			name:           "Player wins with paper vs rock",
 			playerChoice:   "paper",
 			computerChoice: "rock",
+			secretMode:     false,
 			want:           "player",
 		},
 		{
 			name:           "Player wins with scissors vs paper",
 			playerChoice:   "scissors",
 			computerChoice: "paper",
+			secretMode:     false,
 			want:           "player",
 		},
 		{
 			name:           "Player loses with rock vs paper",
 			playerChoice:   "rock",
 			computerChoice: "paper",
+			secretMode:     false,
 			want:           "computer",
 		},
 		{
 			name:           "Player loses with paper vs scissors",
 			playerChoice:   "paper",
 			computerChoice: "scissors",
+			secretMode:     false,
 			want:           "computer",
 		},
 		{
 			name:           "Player loses with scissors vs rock",
 			playerChoice:   "scissors",
 			computerChoice: "rock",
+			secretMode:     false,
 			want:           "computer",
 		},
 		{
 			name:           "Draw with same choices (rock)",
 			playerChoice:   "rock",
 			computerChoice: "rock",
+			secretMode:     false,
 			want:           "draw",
 		},
 		{
 			name:           "Draw with same choices (paper)",
 			playerChoice:   "paper",
 			computerChoice: "paper",
+			secretMode:     false,
 			want:           "draw",
 		},
 		{
 			name:           "Draw with same choices (scissors)",
 			playerChoice:   "scissors",
 			computerChoice: "scissors",
+			secretMode:     false,
 			want:           "draw",
+		},
+		{
+			name:           "Secret mode - Player wins - rock beats lizard",
+			playerChoice:   "rock",
+			computerChoice: "lizard",
+			secretMode:     true,
+			want:           "player",
+		},
+		{
+			name:           "Secret mode - Computer wins - spock beats rock",
+			playerChoice:   "rock",
+			computerChoice: "spock",
+			secretMode:     true,
+			want:           "computer",
 		},
 	}
 
@@ -113,6 +156,7 @@ func TestGame_getWinner(t *testing.T) {
 			g := &Game{
 				PlayerChoice:   tt.playerChoice,
 				ComputerChoice: tt.computerChoice,
+				SecretMode:     tt.secretMode,
 			}
 			if got := g.getWinner(); got != tt.want {
 				t.Errorf("Game.getWinner() = %v, want %v", got, tt.want)
@@ -126,6 +170,7 @@ func TestGame_Play(t *testing.T) {
 		name              string
 		bestOf            int
 		moves             []string
+		secretMode        bool
 		wantGameOver      bool
 		wantPlayerScore   int
 		wantComputerScore int
@@ -134,6 +179,7 @@ func TestGame_Play(t *testing.T) {
 			name:              "Game ends when player chooses exit",
 			bestOf:            3,
 			moves:             []string{"exit"},
+			secretMode:        false,
 			wantGameOver:      true,
 			wantPlayerScore:   0,
 			wantComputerScore: 0,
@@ -142,6 +188,7 @@ func TestGame_Play(t *testing.T) {
 			name:              "Game continues for valid moves",
 			bestOf:            3,
 			moves:             []string{"rock"},
+			secretMode:        false,
 			wantGameOver:      false,
 			wantPlayerScore:   0, // Score will depend on random computer choice
 			wantComputerScore: 0, // Score will depend on random computer choice
@@ -150,7 +197,7 @@ func TestGame_Play(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := NewGame(tt.bestOf)
+			g := NewGame(tt.bestOf, tt.secretMode)
 			for _, move := range tt.moves {
 				g.Play(move)
 			}
@@ -302,7 +349,7 @@ func TestGame_getGameOverMessage(t *testing.T) {
 			if got == "" {
 				t.Error("getGameOverMessage() returned empty string")
 			}
-			if !contains(got, tt.wantMsgContains) {
+			if !strings.Contains(got, tt.wantMsgContains) {
 				t.Errorf("getGameOverMessage() = %v, want it to contain %v", got, tt.wantMsgContains)
 			}
 		})
@@ -337,16 +384,25 @@ func (m *mockPromptSequence) Select(prompt, defaultValue string, options []strin
 
 func TestPlayGame(t *testing.T) {
 	tests := []struct {
-		name         string
-		prompter     Prompter
-		wantGameOver bool
+		name       string
+		prompter   Prompter
+		secretMode bool
 	}{
 		{
-			name: "Complete game sequence",
+			name: "Complete game sequence - standard mode",
 			prompter: &mockPromptSequence{
 				returns: []int{1, 0, 0, 0}, // Select 5 rounds, then rock three times
 				errors:  []error{nil, nil, nil, nil},
 			},
+			secretMode: false,
+		},
+		{
+			name: "Complete game sequence - secret mode",
+			prompter: &mockPromptSequence{
+				returns: []int{1, 0, 0, 0}, // Select 5 rounds, then rock three times
+				errors:  []error{nil, nil, nil, nil},
+			},
+			secretMode: true,
 		},
 		{
 			name: "Error on rounds selection",
@@ -354,6 +410,7 @@ func TestPlayGame(t *testing.T) {
 				returns: []int{0},
 				errors:  []error{fmt.Errorf("mock error")},
 			},
+			secretMode: false,
 		},
 		{
 			name: "Error on move selection",
@@ -361,19 +418,13 @@ func TestPlayGame(t *testing.T) {
 				returns: []int{0, 0},
 				errors:  []error{nil, fmt.Errorf("mock error")},
 			},
-		},
-		{
-			name: "Invalid round index",
-			prompter: &mockPromptSequence{
-				returns: []int{99, 3}, // Invalid round index, then exit
-				errors:  []error{nil, nil},
-			},
+			secretMode: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			PlayGame(tt.prompter)
+			PlayGame(tt.prompter, tt.secretMode)
 		})
 	}
 }

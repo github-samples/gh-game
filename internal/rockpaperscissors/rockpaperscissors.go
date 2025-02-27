@@ -9,7 +9,8 @@ import (
 
 // Game options
 var (
-	options = []string{"rock", "paper", "scissors", "exit"}
+	standardOptions = []string{"rock", "paper", "scissors", "exit"}
+	secretOptions   = []string{"rock", "paper", "scissors", "lizard", "spock", "exit"}
 )
 
 // Game represents a single game of Rock Paper Scissors.
@@ -32,6 +33,8 @@ type Game struct {
 	GameOverMessage string
 	// GamesPlayed tracks the number of games played
 	GamesPlayed int
+	// SecretMode indicates if the game is in secret mode
+	SecretMode bool
 }
 
 // Prompter defines an interface for getting user input
@@ -39,7 +42,7 @@ type Prompter interface {
 	Select(prompt, defaultValue string, options []string) (int, error)
 }
 
-func NewGame(bestOf int) *Game {
+func NewGame(bestOf int, secretMode bool) *Game {
 	if bestOf%2 == 0 {
 		bestOf++ // Ensure we have an odd number for "best of"
 	}
@@ -53,6 +56,7 @@ func NewGame(bestOf int) *Game {
 		BestOf:          bestOf,
 		GameOver:        false,
 		GameOverMessage: "",
+		SecretMode:      secretMode,
 	}
 }
 
@@ -78,6 +82,10 @@ func (g *Game) Play(playerChoice string) {
 // getComputerChoice returns the choice made by the computer.
 func (g *Game) getComputerChoice() string {
 	rand.Seed(time.Now().UnixNano())
+	options := standardOptions
+	if g.SecretMode {
+		options = secretOptions
+	}
 	// Only use the game options excluding "exit"
 	choices := options[:len(options)-1]
 	return choices[rand.Intn(len(choices))]
@@ -88,10 +96,19 @@ func (g *Game) getWinner() string {
 	if g.PlayerChoice == g.ComputerChoice {
 		return "draw"
 	}
-	if (g.PlayerChoice == "rock" && g.ComputerChoice == "scissors") ||
-		(g.PlayerChoice == "paper" && g.ComputerChoice == "rock") ||
-		(g.PlayerChoice == "scissors" && g.ComputerChoice == "paper") {
-		return "player"
+
+	winningMoves := map[string][]string{
+		"rock":     {"scissors", "lizard"},
+		"paper":    {"rock", "spock"},
+		"scissors": {"paper", "lizard"},
+		"lizard":   {"paper", "spock"},
+		"spock":    {"rock", "scissors"},
+	}
+
+	for _, beatenChoice := range winningMoves[g.PlayerChoice] {
+		if g.ComputerChoice == beatenChoice {
+			return "player"
+		}
 	}
 	return "computer"
 }
@@ -143,7 +160,7 @@ func (g *Game) getRoundResultMessage() string {
 }
 
 // PlayGame plays a game of Rock Paper Scissors.
-func PlayGame(prompter Prompter) {
+func PlayGame(prompter Prompter, secretMode bool) {
 	// Get the number of rounds from the user
 	roundOptions := []string{"3", "5", "7", "9"}
 	roundIndex, err := prompter.Select("How many rounds would you like to play (best of)?", "3", roundOptions)
@@ -156,12 +173,20 @@ func PlayGame(prompter Prompter) {
 		bestOf = parseInt(roundOptions[roundIndex])
 	}
 
-	game := NewGame(bestOf)
+	game := NewGame(bestOf, secretMode)
 	fmt.Printf("Playing best of %d games\n", bestOf)
+	if secretMode {
+		fmt.Println("🖖 Secret mode activated: Rock Paper Scissors Lizard Spock!")
+	}
 
 	for !game.GameOver {
 		fmt.Printf("\nCurrent score - Player: %d, Computer: %d\n", game.PlayerScore, game.ComputerScore)
-
+		
+		options := standardOptions
+		if secretMode {
+			options = secretOptions
+		}
+		
 		// Get player choice using prompter
 		playerChoiceIndex, err := prompter.Select("Choose your move", "rock", options)
 		if err != nil {
