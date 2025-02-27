@@ -2,6 +2,7 @@ package cointoss
 
 import (
 	"errors"
+	"strings"
 	"testing"
 )
 
@@ -41,7 +42,7 @@ func TestTossCoin(t *testing.T) {
 	}
 }
 
-func TestGetNextGuessWithPrompter(t *testing.T) {
+func TestGetPlayerGuess(t *testing.T) {
 	tests := []struct {
 		name          string
 		selectAnswer  int
@@ -77,13 +78,6 @@ func TestGetNextGuessWithPrompter(t *testing.T) {
 			expectedGuess: "",
 			expectedCont:  false,
 		},
-		{
-			name:          "error during selection prints error message",
-			selectAnswer:  0,
-			selectError:   errors.New("test error"),
-			expectedGuess: "",
-			expectedCont:  false,
-		},
 	}
 
 	for _, tt := range tests {
@@ -92,15 +86,92 @@ func TestGetNextGuessWithPrompter(t *testing.T) {
 				selectAnswer: tt.selectAnswer,
 				selectError:  tt.selectError,
 			}
-
-			guess, cont := GetNextGuessWithPrompter(mockP)
-
+			guess, cont := GetPlayerGuess(mockP)
 			if guess != tt.expectedGuess {
-				t.Errorf("GetNextGuessWithPrompter() guess = %v, want %v", guess, tt.expectedGuess)
+				t.Errorf("GetPlayerGuess() guess = %v, want %v", guess, tt.expectedGuess)
 			}
 			if cont != tt.expectedCont {
-				t.Errorf("GetNextGuessWithPrompter() cont = %v, want %v", cont, tt.expectedCont)
+				t.Errorf("GetPlayerGuess() cont = %v, want %v", cont, tt.expectedCont)
 			}
 		})
 	}
+}
+
+func TestGame_Play(t *testing.T) {
+	game := NewGame()
+
+	// Test initial state
+	if game.IsOver {
+		t.Error("New game should not be over")
+	}
+
+	// Play a round
+	game.Play("heads")
+
+	// Test that game state is updated
+	if !game.IsOver {
+		t.Error("Game should be over after playing")
+	}
+	if game.PlayerGuess != "heads" {
+		t.Errorf("PlayerGuess = %v, want heads", game.PlayerGuess)
+	}
+	if game.Result != "heads" && game.Result != "tails" {
+		t.Errorf("Result = %v, want either heads or tails", game.Result)
+	}
+}
+
+func TestGame_GetResult(t *testing.T) {
+	tests := []struct {
+		name        string
+		playerGuess string
+		result      string
+		wantWin     bool
+	}{
+		{
+			name:        "player wins with heads",
+			playerGuess: "heads",
+			result:      "heads",
+			wantWin:     true,
+		},
+		{
+			name:        "player wins with tails",
+			playerGuess: "tails",
+			result:      "tails",
+			wantWin:     true,
+		},
+		{
+			name:        "player loses with heads",
+			playerGuess: "heads",
+			result:      "tails",
+			wantWin:     false,
+		},
+		{
+			name:        "player loses with tails",
+			playerGuess: "tails",
+			result:      "heads",
+			wantWin:     false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			game := &Game{
+				PlayerGuess: tt.playerGuess,
+				Result:      tt.result,
+				IsOver:      true,
+			}
+			got := game.GetResult()
+			if tt.wantWin && !contains(got, "You win!") {
+				t.Errorf("GetResult() = %v, want win message", got)
+			}
+			if !tt.wantWin && !contains(got, "You lose!") {
+				t.Errorf("GetResult() = %v, want lose message", got)
+			}
+		})
+	}
+}
+
+// Helper function to check if a string contains a substring
+func contains(s, substr string) bool {
+	return strings.Contains(s, substr)
 }

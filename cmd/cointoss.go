@@ -2,10 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
-	"github.com/chrisreddington/gh-game/internal/cointoss" // adjust import path as needed
-
+	"github.com/chrisreddington/gh-game/internal/cointoss"
+	userPrompt "github.com/cli/go-gh/v2/pkg/prompter"
 	"github.com/spf13/cobra"
 )
 
@@ -20,20 +21,20 @@ var cointossCmd = &cobra.Command{
 		return cointoss.ValidateGuess(args[0])
 	},
 	Run: func(cmd *cobra.Command, args []string) {
+		game := cointoss.NewGame()
+		prompter := userPrompt.New(os.Stdin, os.Stdout, os.Stderr)
 		guess := strings.ToLower(strings.TrimSpace(args[0]))
 		streak := 0
 		keepPlaying := true
 
 		for keepPlaying {
-			result := cointoss.TossCoin()
-			fmt.Printf("The coin shows: %s!\n", strings.Title(result))
+			game.Play(guess)
+			fmt.Println(game.GetResult())
 
-			if guess == result {
+			if game.PlayerGuess == game.Result {
 				streak++
-				fmt.Printf("Correct! Streak: %d\n", streak)
-				var continuePlay bool
-				guess, continuePlay = cointoss.GetNextGuess()
-				keepPlaying = continuePlay
+				fmt.Printf("Streak: %d\n", streak)
+				guess, keepPlaying = cointoss.GetPlayerGuess(prompter)
 			} else {
 				fmt.Printf("Game Over! Final streak: %d\n", streak)
 				keepPlaying = false
