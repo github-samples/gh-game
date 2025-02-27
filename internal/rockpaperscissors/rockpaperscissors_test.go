@@ -149,6 +149,48 @@ func TestGame_getWinner(t *testing.T) {
 			secretMode:     true,
 			want:           "computer",
 		},
+		{
+			name:           "Secret mode - Draw - spock vs spock",
+			playerChoice:   "spock",
+			computerChoice: "spock",
+			secretMode:     true,
+			want:           "draw",
+		},
+		{
+			name:           "Secret mode - Player wins - lizard beats spock",
+			playerChoice:   "lizard",
+			computerChoice: "spock",
+			secretMode:     true,
+			want:           "player",
+		},
+		{
+			name:           "Secret mode - Computer wins - lizard beats spock",
+			playerChoice:   "lizard",
+			computerChoice: "rock",
+			secretMode:     true,
+			want:           "computer",
+		},
+		{
+			name:           "Secret mode - Draw - lizard vs lizard",
+			playerChoice:   "lizard",
+			computerChoice: "lizard",
+			secretMode:     true,
+			want:           "draw",
+		},
+		{
+			name:           "Secret mode - Player wins - spock beats scissors",
+			playerChoice:   "spock",
+			computerChoice: "scissors",
+			secretMode:     true,
+			want:           "player",
+		},
+		{
+			name:           "Secret mode - Computer wins - spock beats paper",
+			playerChoice:   "spock",
+			computerChoice: "paper",
+			secretMode:     true,
+			want:           "computer",
+		},
 	}
 
 	for _, tt := range tests {
