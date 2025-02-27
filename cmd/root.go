@@ -18,4 +18,5 @@ func init() {
 	rootCmd.AddCommand(whoamiCmd)
 	rootCmd.AddCommand(cointossCmd)
 	rootCmd.AddCommand(tictactoeCmd)
+	rootCmd.AddCommand(rockPaperScissorsCmd)
 }
