@@ -25,7 +25,8 @@ func NewGame() *Game {
 	}
 }
 
-func TossCoin() string {
+// TossCoin is a variable so it can be replaced in tests
+var TossCoin = func() string {
 	rand.Seed(time.Now().UnixNano())
 	if rand.Float32() < 0.5 {
 		return "heads"
@@ -72,4 +73,26 @@ func (g *Game) GetResult() string {
 		return fmt.Sprintf("You guessed %s and the coin landed on %s. You win!", g.PlayerGuess, g.Result)
 	}
 	return fmt.Sprintf("You guessed %s but the coin landed on %s. You lose!", g.PlayerGuess, g.Result)
+}
+
+// PlayGame handles the main game loop
+func PlayGame(p prompter, initialGuess string) {
+	game := NewGame()
+	streak := 0
+	keepPlaying := true
+	guess := strings.ToLower(strings.TrimSpace(initialGuess))
+
+	for keepPlaying {
+		game.Play(guess)
+		fmt.Println(game.GetResult())
+		
+		if game.PlayerGuess == game.Result {
+			streak++
+			fmt.Printf("Streak: %d\n", streak)
+			guess, keepPlaying = GetPlayerGuess(p)
+		} else {
+			fmt.Printf("Game Over! Final streak: %d\n", streak)
+			keepPlaying = false
+		}
+	}
 }

@@ -175,3 +175,54 @@ func TestGame_GetResult(t *testing.T) {
 func contains(s, substr string) bool {
 	return strings.Contains(s, substr)
 }
+
+func TestPlayGame(t *testing.T) {
+	tests := []struct {
+		name         string
+		selectAnswer int
+		selectError  error
+		initialGuess string
+		results      []string // sequence of coin flip results to test
+	}{
+		{
+			name:         "win first round then quit",
+			selectAnswer: 2, // quit
+			initialGuess: "heads",
+			results:      []string{"heads"},
+		},
+		{
+			name:         "lose first round",
+			initialGuess: "heads",
+			results:      []string{"tails"},
+		},
+		{
+			name:         "win twice then lose",
+			selectAnswer: 0, // heads
+			initialGuess: "heads",
+			results:      []string{"heads", "heads", "tails"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockP := &mockPrompter{
+				selectAnswer: tt.selectAnswer,
+				selectError:  tt.selectError,
+			}
+
+			// Override TossCoin for deterministic testing
+			resultIndex := 0
+			oldTossCoin := TossCoin
+			TossCoin = func() string {
+				result := tt.results[resultIndex]
+				if resultIndex < len(tt.results)-1 {
+					resultIndex++
+				}
+				return result
+			}
+			defer func() { TossCoin = oldTossCoin }()
+
+			PlayGame(mockP, tt.initialGuess)
+		})
+	}
+}
