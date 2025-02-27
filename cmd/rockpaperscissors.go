@@ -2,7 +2,7 @@
 // The game logic is in the internal/rockpaperscissors package.
 
 // This file sets up the command line interface for the game. It should call the PlayGame function from the rockpaperscissors package.
-
+// Package cmd contains all the commands for the CLI application.
 package cmd
 
 import (
