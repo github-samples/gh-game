@@ -398,6 +398,56 @@ func TestGame_getGameOverMessage(t *testing.T) {
 	}
 }
 
+func TestGame_getRoundResultMessage(t *testing.T) {
+	tests := []struct {
+		name           string
+		playerChoice   string
+		computerChoice string
+		winner         string
+		wantContains   []string
+	}{
+		{
+			name:           "Player wins",
+			playerChoice:   "rock",
+			computerChoice: "scissors",
+			winner:         "player",
+			wantContains:   []string{"Player", "beats", "rock", "scissors"},
+		},
+		{
+			name:           "Computer wins",
+			playerChoice:   "rock",
+			computerChoice: "paper",
+			winner:         "computer",
+			wantContains:   []string{"Player", "loses to", "rock", "paper"},
+		},
+		{
+			name:           "Draw",
+			playerChoice:   "rock",
+			computerChoice: "rock",
+			winner:         "draw",
+			wantContains:   []string{"Draw", "Player", "CPU", "rock"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := &Game{
+				PlayerChoice:   tt.playerChoice,
+				ComputerChoice: tt.computerChoice,
+				Winner:         tt.winner,
+			}
+
+			got := g.getRoundResultMessage()
+
+			for _, want := range tt.wantContains {
+				if !strings.Contains(strings.ToLower(got), strings.ToLower(want)) {
+					t.Errorf("getRoundResultMessage() = %v, want it to contain %v", got, want)
+				}
+			}
+		})
+	}
+}
+
 // MockPrompter implements the Prompter interface for testing
 type MockPrompter struct {
 	selectReturn int
@@ -517,6 +567,92 @@ func TestParseInt(t *testing.T) {
 	}
 }
 
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && s[0:len(substr)] == substr
+func TestGame_getComputerChoice(t *testing.T) {
+	// Test standard mode
+	g1 := &Game{
+		SecretMode: false,
+	}
+
+	standardChoices := map[string]bool{
+		"rock":     false,
+		"paper":    false,
+		"scissors": false,
+	}
+
+	// Run multiple times to ensure we get a variety of responses
+	for i := 0; i < 100; i++ {
+		choice := g1.getComputerChoice()
+		if _, ok := standardChoices[choice]; !ok {
+			t.Errorf("getComputerChoice() in standard mode returned an invalid choice: %v", choice)
+		}
+		standardChoices[choice] = true
+	}
+
+	// Ensure we got all possible standard choices
+	for choice, found := range standardChoices {
+		if !found {
+			t.Errorf("getComputerChoice() in standard mode never returned %v", choice)
+		}
+	}
+
+	// Test secret mode
+	g2 := &Game{
+		SecretMode: true,
+	}
+
+	secretChoices := map[string]bool{
+		"rock":     false,
+		"paper":    false,
+		"scissors": false,
+		"lizard":   false,
+		"spock":    false,
+	}
+
+	// Run multiple times to ensure we get a variety of responses
+	for i := 0; i < 200; i++ {
+		choice := g2.getComputerChoice()
+		if _, ok := secretChoices[choice]; !ok {
+			t.Errorf("getComputerChoice() in secret mode returned an invalid choice: %v", choice)
+		}
+		secretChoices[choice] = true
+	}
+}
+
+func TestPlayGame_EnhancedCoverage(t *testing.T) {
+	tests := []struct {
+		name       string
+		returns    []int
+		errors     []error
+		secretMode bool
+	}{
+		{
+			name:       "Exit early",
+			returns:    []int{0, 3}, // Select 3 rounds, then exit
+			errors:     []error{nil, nil},
+			secretMode: false,
+		},
+		{
+			name:       "Invalid round index",
+			returns:    []int{99, 0, 0}, // Invalid round index should use default
+			errors:     []error{nil, nil, nil},
+			secretMode: false,
+		},
+		{
+			name:       "Secret mode with exit",
+			returns:    []int{2, 3}, // Select 7 rounds, then exit
+			errors:     []error{nil, nil},
+			secretMode: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockPrompt := &mockPromptSequence{
+				returns: tt.returns,
+				errors:  tt.errors,
+			}
+
+			PlayGame(mockPrompt, tt.secretMode)
+		})
+	}
 }
