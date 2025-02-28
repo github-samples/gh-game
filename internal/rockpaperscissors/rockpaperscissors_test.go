@@ -64,144 +64,210 @@ func TestNewGame(t *testing.T) {
 	}
 }
 
-func TestGame_getWinner(t *testing.T) {
-	tests := []struct {
-		name           string
-		playerChoice   string
-		computerChoice string
-		secretMode     bool
-		want           string
-	}{
+// gameCombination represents a specific game combination for testing
+type gameCombination struct {
+	name           string
+	playerChoice   string
+	computerChoice string
+	secretMode     bool
+	winner         string
+}
+
+// getGameCombinations returns a list of game combinations for testing
+func getGameCombinations() []gameCombination {
+	return []gameCombination{
+		// Normal mode combinations
 		{
-			name:           "Player wins with rock vs scissors",
+			name:           "Normal mode - Player wins - rock beats scissors",
 			playerChoice:   "rock",
 			computerChoice: "scissors",
 			secretMode:     false,
-			want:           "player",
+			winner:         "player",
 		},
 		{
-			name:           "Player wins with paper vs rock",
+			name:           "Normal mode - Player wins - paper beats rock",
 			playerChoice:   "paper",
 			computerChoice: "rock",
 			secretMode:     false,
-			want:           "player",
+			winner:         "player",
 		},
 		{
-			name:           "Player wins with scissors vs paper",
+			name:           "Normal mode - Player wins - scissors beats paper",
 			playerChoice:   "scissors",
 			computerChoice: "paper",
 			secretMode:     false,
-			want:           "player",
+			winner:         "player",
 		},
 		{
-			name:           "Player loses with rock vs paper",
+			name:           "Normal mode - Player loses - paper beats rock",
 			playerChoice:   "rock",
 			computerChoice: "paper",
 			secretMode:     false,
-			want:           "computer",
+			winner:         "computer",
 		},
 		{
-			name:           "Player loses with paper vs scissors",
+			name:           "Normal mode - Player loses - scissors beats paper",
 			playerChoice:   "paper",
 			computerChoice: "scissors",
 			secretMode:     false,
-			want:           "computer",
+			winner:         "computer",
 		},
 		{
-			name:           "Player loses with scissors vs rock",
+			name:           "Normal mode - Player loses - rock beats scissors",
 			playerChoice:   "scissors",
 			computerChoice: "rock",
 			secretMode:     false,
-			want:           "computer",
+			winner:         "computer",
 		},
 		{
-			name:           "Draw with same choices (rock)",
+			name:           "Normal mode - Draw with same choices (rock)",
 			playerChoice:   "rock",
 			computerChoice: "rock",
 			secretMode:     false,
-			want:           "draw",
+			winner:         "draw",
 		},
 		{
-			name:           "Draw with same choices (paper)",
+			name:           "Normal mode - Draw with same choices (paper)",
 			playerChoice:   "paper",
 			computerChoice: "paper",
 			secretMode:     false,
-			want:           "draw",
+			winner:         "draw",
 		},
 		{
-			name:           "Draw with same choices (scissors)",
+			name:           "Normal mode - Draw with same choices (scissors)",
 			playerChoice:   "scissors",
 			computerChoice: "scissors",
 			secretMode:     false,
-			want:           "draw",
+			winner:         "draw",
 		},
+		// Secret mode combinations
 		{
 			name:           "Secret mode - Player wins - rock beats lizard",
 			playerChoice:   "rock",
 			computerChoice: "lizard",
 			secretMode:     true,
-			want:           "player",
-		},
-		{
-			name:           "Secret mode - Computer wins - spock beats rock",
-			playerChoice:   "rock",
-			computerChoice: "spock",
-			secretMode:     true,
-			want:           "computer",
-		},
-		{
-			name:           "Secret mode - Draw - spock vs spock",
-			playerChoice:   "spock",
-			computerChoice: "spock",
-			secretMode:     true,
-			want:           "draw",
+			winner:         "player",
 		},
 		{
 			name:           "Secret mode - Player wins - lizard beats spock",
 			playerChoice:   "lizard",
 			computerChoice: "spock",
 			secretMode:     true,
-			want:           "player",
-		},
-		{
-			name:           "Secret mode - Computer wins - lizard beats spock",
-			playerChoice:   "lizard",
-			computerChoice: "rock",
-			secretMode:     true,
-			want:           "computer",
-		},
-		{
-			name:           "Secret mode - Draw - lizard vs lizard",
-			playerChoice:   "lizard",
-			computerChoice: "lizard",
-			secretMode:     true,
-			want:           "draw",
+			winner:         "player",
 		},
 		{
 			name:           "Secret mode - Player wins - spock beats scissors",
 			playerChoice:   "spock",
 			computerChoice: "scissors",
 			secretMode:     true,
-			want:           "player",
+			winner:         "player",
 		},
 		{
-			name:           "Secret mode - Computer wins - spock beats paper",
+			name:           "Secret mode - Player wins - scissors beats lizard",
+			playerChoice:   "scissors",
+			computerChoice: "lizard",
+			secretMode:     true,
+			winner:         "player",
+		},
+		{
+			name:           "Secret mode - Player wins - lizard beats paper",
+			playerChoice:   "lizard",
+			computerChoice: "paper",
+			secretMode:     true,
+			winner:         "player",
+		},
+		{
+			name:           "Secret mode - Player wins - paper beats spock",
+			playerChoice:   "paper",
+			computerChoice: "spock",
+			secretMode:     true,
+			winner:         "player",
+		},
+		{
+			name:           "Secret mode - Player wins - spock beats rock",
+			playerChoice:   "spock",
+			computerChoice: "rock",
+			secretMode:     true,
+			winner:         "player",
+		},
+		{
+			name:           "Secret mode - Draw - lizard vs lizard",
+			playerChoice:   "lizard",
+			computerChoice: "lizard",
+			secretMode:     true,
+			winner:         "draw",
+		},
+		{
+			name:           "Secret mode - Draw - spock vs spock",
+			playerChoice:   "spock",
+			computerChoice: "spock",
+			secretMode:     true,
+			winner:         "draw",
+		},
+		{
+			name:           "Secret mode - Player loses - lizard beats rock",
+			playerChoice:   "lizard",
+			computerChoice: "rock",
+			secretMode:     true,
+			winner:         "computer",
+		},
+		{
+			name:           "Secret mode - Player loses - lizard beats spock",
+			playerChoice:   "spock",
+			computerChoice: "lizard",
+			secretMode:     true,
+			winner:         "computer",
+		},
+		{
+			name:           "Secret mode - Player loses - spock beats scissors",
+			playerChoice:   "scissors",
+			computerChoice: "spock",
+			secretMode:     true,
+			winner:         "computer",
+		},
+		{
+			name:           "Secret mode - Player loses - scissors beats lizard",
+			playerChoice:   "lizard",
+			computerChoice: "scissors",
+			secretMode:     true,
+			winner:         "computer",
+		},
+		{
+			name:           "Secret mode - Player loses - lizard beats paper",
+			playerChoice:   "paper",
+			computerChoice: "lizard",
+			secretMode:     true,
+			winner:         "computer",
+		},
+		{
+			name:           "Secret mode - Player loses - paper beats spock",
 			playerChoice:   "spock",
 			computerChoice: "paper",
 			secretMode:     true,
-			want:           "computer",
+			winner:         "computer",
+		},
+		{
+			name:           "Secret mode - Player loses - spock beats rock",
+			playerChoice:   "rock",
+			computerChoice: "spock",
+			secretMode:     true,
+			winner:         "computer",
 		},
 	}
+}
 
-	for _, tt := range tests {
+func TestGame_getWinner(t *testing.T) {
+	combinations := getGameCombinations()
+
+	for _, tt := range combinations {
 		t.Run(tt.name, func(t *testing.T) {
 			g := &Game{
 				PlayerChoice:   tt.playerChoice,
 				ComputerChoice: tt.computerChoice,
 				SecretMode:     tt.secretMode,
 			}
-			if got := g.getWinner(); got != tt.want {
-				t.Errorf("Game.getWinner() = %v, want %v", got, tt.want)
+			if got := g.getWinner(); got != tt.winner {
+				t.Errorf("Game.getWinner() = %v, want %v", got, tt.winner)
 			}
 		})
 	}
@@ -398,6 +464,40 @@ func TestGame_getGameOverMessage(t *testing.T) {
 	}
 }
 
+func TestGame_getRoundResultMessage(t *testing.T) {
+	combinations := getGameCombinations()
+
+	for _, tt := range combinations {
+		t.Run(tt.name, func(t *testing.T) {
+			g := &Game{
+				PlayerChoice:   tt.playerChoice,
+				ComputerChoice: tt.computerChoice,
+				Winner:         tt.winner,
+			}
+
+			got := g.getRoundResultMessage()
+
+			// Verify the message contains expected substrings based on the winner
+			wantContains := []string{tt.playerChoice, tt.computerChoice}
+
+			switch tt.winner {
+			case "player":
+				wantContains = append(wantContains, "Player", "beats")
+			case "computer":
+				wantContains = append(wantContains, "loses to")
+			case "draw":
+				wantContains = append(wantContains, "Draw", "Player", "CPU")
+			}
+
+			for _, want := range wantContains {
+				if !strings.Contains(strings.ToLower(got), strings.ToLower(want)) {
+					t.Errorf("getRoundResultMessage() = %v, want it to contain %v", got, want)
+				}
+			}
+		})
+	}
+}
+
 // MockPrompter implements the Prompter interface for testing
 type MockPrompter struct {
 	selectReturn int
@@ -517,6 +617,92 @@ func TestParseInt(t *testing.T) {
 	}
 }
 
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && s[0:len(substr)] == substr
+func TestGame_getComputerChoice(t *testing.T) {
+	// Test standard mode
+	g1 := &Game{
+		SecretMode: false,
+	}
+
+	standardChoices := map[string]bool{
+		"rock":     false,
+		"paper":    false,
+		"scissors": false,
+	}
+
+	// Run multiple times to ensure we get a variety of responses
+	for i := 0; i < 100; i++ {
+		choice := g1.getComputerChoice()
+		if _, ok := standardChoices[choice]; !ok {
+			t.Errorf("getComputerChoice() in standard mode returned an invalid choice: %v", choice)
+		}
+		standardChoices[choice] = true
+	}
+
+	// Ensure we got all possible standard choices
+	for choice, found := range standardChoices {
+		if !found {
+			t.Errorf("getComputerChoice() in standard mode never returned %v", choice)
+		}
+	}
+
+	// Test secret mode
+	g2 := &Game{
+		SecretMode: true,
+	}
+
+	secretChoices := map[string]bool{
+		"rock":     false,
+		"paper":    false,
+		"scissors": false,
+		"lizard":   false,
+		"spock":    false,
+	}
+
+	// Run multiple times to ensure we get a variety of responses
+	for i := 0; i < 200; i++ {
+		choice := g2.getComputerChoice()
+		if _, ok := secretChoices[choice]; !ok {
+			t.Errorf("getComputerChoice() in secret mode returned an invalid choice: %v", choice)
+		}
+		secretChoices[choice] = true
+	}
+}
+
+func TestPlayGame_EnhancedCoverage(t *testing.T) {
+	tests := []struct {
+		name       string
+		returns    []int
+		errors     []error
+		secretMode bool
+	}{
+		{
+			name:       "Exit early",
+			returns:    []int{0, 3}, // Select 3 rounds, then exit
+			errors:     []error{nil, nil},
+			secretMode: false,
+		},
+		{
+			name:       "Invalid round index",
+			returns:    []int{99, 0, 0}, // Invalid round index should use default
+			errors:     []error{nil, nil, nil},
+			secretMode: false,
+		},
+		{
+			name:       "Secret mode with exit",
+			returns:    []int{2, 3}, // Select 7 rounds, then exit
+			errors:     []error{nil, nil},
+			secretMode: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockPrompt := &mockPromptSequence{
+				returns: tt.returns,
+				errors:  tt.errors,
+			}
+
+			PlayGame(mockPrompt, tt.secretMode)
+		})
+	}
 }

@@ -3,19 +3,30 @@ package cointoss
 import (
 	"fmt"
 	"math/rand"
-	"os"
 	"strings"
 	"time"
-
-	userPrompt "github.com/cli/go-gh/v2/pkg/prompter"
 )
+
+// Game represents the state of a coin toss game
+type Game struct {
+	PlayerGuess string
+	Result      string
+	IsOver      bool
+}
 
 // prompter interface allows us to mock the prompt functionality in tests
 type prompter interface {
 	Select(prompt string, defaultValue string, options []string) (int, error)
 }
 
-func TossCoin() string {
+func NewGame() *Game {
+	return &Game{
+		IsOver: false,
+	}
+}
+
+// TossCoin is a variable so it can be replaced in tests
+var TossCoin = func() string {
 	rand.Seed(time.Now().UnixNano())
 	if rand.Float32() < 0.5 {
 		return "heads"
@@ -31,11 +42,8 @@ func ValidateGuess(guess string) error {
 	return nil
 }
 
-func GetNextGuess() (string, bool) {
-	return GetNextGuessWithPrompter(userPrompt.New(os.Stdin, os.Stdout, os.Stderr))
-}
-
-func GetNextGuessWithPrompter(p prompter) (string, bool) {
+// GetPlayerGuess gets the player's next guess using the provided prompter
+func GetPlayerGuess(p prompter) (string, bool) {
 	options := []string{"Heads", "Tails", "Quit"}
 
 	answer, err := p.Select("What's your next guess? Heads, Tails or Quit?", "Heads", options)
@@ -50,4 +58,41 @@ func GetNextGuessWithPrompter(p prompter) (string, bool) {
 	}
 
 	return answerLower, true
+}
+
+// Play executes a round of the coin toss game
+func (g *Game) Play(guess string) {
+	g.PlayerGuess = guess
+	g.Result = TossCoin()
+	g.IsOver = true
+}
+
+// GetResult returns the game result message
+func (g *Game) GetResult() string {
+	if g.PlayerGuess == g.Result {
+		return fmt.Sprintf("You guessed %s and the coin landed on %s. You win!", g.PlayerGuess, g.Result)
+	}
+	return fmt.Sprintf("You guessed %s but the coin landed on %s. You lose!", g.PlayerGuess, g.Result)
+}
+
+// PlayGame handles the main game loop
+func PlayGame(p prompter, initialGuess string) {
+	game := NewGame()
+	streak := 0
+	keepPlaying := true
+	guess := strings.ToLower(strings.TrimSpace(initialGuess))
+
+	for keepPlaying {
+		game.Play(guess)
+		fmt.Println(game.GetResult())
+		
+		if game.PlayerGuess == game.Result {
+			streak++
+			fmt.Printf("Streak: %d\n", streak)
+			guess, keepPlaying = GetPlayerGuess(p)
+		} else {
+			fmt.Printf("Game Over! Final streak: %d\n", streak)
+			keepPlaying = false
+		}
+	}
 }
