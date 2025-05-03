@@ -6,12 +6,15 @@ import (
 	"testing"
 )
 
-// Mock prompter for testing
+// mockPrompter implements the Prompter interface for cointoss game testing.
+// It provides configurable responses for testing user interactions.
 type mockPrompter struct {
-	selectAnswer int
-	selectError  error
+	selectAnswer int   // Response index to return from Select calls
+	selectError  error // Error to return from Select calls
 }
 
+// Select implements the Prompter interface by returning the preconfigured
+// selectAnswer and selectError values.
 func (m *mockPrompter) Select(prompt string, defaultValue string, options []string) (int, error) {
 	return m.selectAnswer, m.selectError
 }

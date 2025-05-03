@@ -98,3 +98,7 @@ Choose between two game modes:
 		}
 	},
 }
+
+func init() {
+	rootCmd.AddCommand(tictactoeCmd)
+}

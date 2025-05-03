@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
-	"time"
 )
 
 // Game represents the state of a coin toss game
@@ -27,7 +26,6 @@ func NewGame() *Game {
 
 // TossCoin is a variable so it can be replaced in tests
 var TossCoin = func() string {
-	rand.Seed(time.Now().UnixNano())
 	if rand.Float32() < 0.5 {
 		return "heads"
 	}
@@ -85,7 +83,7 @@ func PlayGame(p prompter, initialGuess string) {
 	for keepPlaying {
 		game.Play(guess)
 		fmt.Println(game.GetResult())
-		
+
 		if game.PlayerGuess == game.Result {
 			streak++
 			fmt.Printf("Streak: %d\n", streak)

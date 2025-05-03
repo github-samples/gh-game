@@ -1,6 +1,7 @@
 module github.com/chrisreddington/gh-game
 
 go 1.23.3
+
 toolchain go1.24.1
 
 require (

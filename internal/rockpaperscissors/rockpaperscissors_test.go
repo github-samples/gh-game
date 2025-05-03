@@ -64,16 +64,20 @@ func TestNewGame(t *testing.T) {
 	}
 }
 
-// gameCombination represents a specific game combination for testing
+// gameCombination represents a specific game combination for testing.
+// It defines a test case with player and computer choices, game mode,
+// and the expected winner for that combination.
 type gameCombination struct {
-	name           string
-	playerChoice   string
-	computerChoice string
-	secretMode     bool
-	winner         string
+	name           string // Name of the test case
+	playerChoice   string // Player's choice (rock, paper, scissors, etc.)
+	computerChoice string // Computer's choice (rock, paper, scissors, etc.)
+	secretMode     bool   // Whether secret mode is enabled
+	winner         string // Expected winner (player, computer, or tie)
 }
 
-// getGameCombinations returns a list of game combinations for testing
+// getGameCombinations returns a comprehensive list of game combinations for testing
+// different Rock Paper Scissors outcomes in both normal and secret modes.
+// It covers all winning, losing, and tie scenarios.
 func getGameCombinations() []gameCombination {
 	return []gameCombination{
 		// Normal mode combinations

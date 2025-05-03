@@ -20,6 +20,23 @@ gh game cointoss heads  # or tails
 
 The game will continue as long as you keep guessing correctly, allowing you to build up a streak. You can quit at any time by selecting "Quit" when prompted for your next guess.
 
+### Higher or Lower
+
+Play a number guessing game where you predict if the next random number will be higher or lower than the current one. See how long you can maintain your streak of correct guesses!
+
+```sh
+gh game higherlower
+```
+
+Optional flags:
+- `--min` or `-m`: Set the minimum possible number (default: 1)
+- `--max` or `-M`: Set the maximum possible number (default: 100)
+
+Example with custom range:
+```sh
+gh game higherlower --min 1 --max 1000
+```
+
 ### Rock Paper Scissors
 
 Play Rock Paper Scissors against the computer. Best of 3, 5, 7, or 9 rounds.
@@ -43,13 +60,15 @@ gh game tictactoe
 
 The game provides an interactive interface where you can select positions on the board using numbers 1-9, corresponding to the grid positions from left to right, top to bottom.
 
-### Whoami
+### Word Guess
 
-Display information about the currently authenticated GitHub user.
+Play a word guessing game where you guess a GitHub-related term one letter at a time. Try to reveal the word before running out of guesses!
 
 ```sh
-gh game whoami
+gh game wordguess
 ```
+
+The game selects a random GitHub-related term, and you need to guess it by suggesting one letter at a time. Each correct letter is revealed in its position. Each incorrect guess reduces your remaining guesses. You win by guessing the complete word before making 6 incorrect guesses.
 
 ## Development
 

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"time"
 
 	"github.com/charmbracelet/lipgloss"
 )
@@ -284,7 +283,6 @@ func (g *Game) GetComputerMove() (rowIndex, columnIndex int) {
 
 	// Take a corner if available
 	corners := [][2]int{{0, 0}, {0, 2}, {2, 0}, {2, 2}}
-	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(corners), func(i, j int) {
 		corners[i], corners[j] = corners[j], corners[i]
 	})

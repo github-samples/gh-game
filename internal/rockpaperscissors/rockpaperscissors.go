@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
-	"time"
 )
 
 // Game options
@@ -81,7 +80,6 @@ func (g *Game) Play(playerChoice string) {
 
 // getComputerChoice returns the choice made by the computer.
 func (g *Game) getComputerChoice() string {
-	rand.Seed(time.Now().UnixNano())
 	options := standardOptions
 	if g.SecretMode {
 		options = secretOptions
@@ -115,9 +113,10 @@ func (g *Game) getWinner() string {
 
 // updateScore updates the score based on the round winner
 func (g *Game) updateScore() {
-	if g.Winner == "player" {
+	switch g.Winner {
+	case "player":
 		g.PlayerScore++
-	} else if g.Winner == "computer" {
+	case "computer":
 		g.ComputerScore++
 	}
 }
@@ -147,14 +146,15 @@ func (g *Game) getGameOverMessage() string {
 // getRoundResultMessage returns a concise message about the round result
 func (g *Game) getRoundResultMessage() string {
 	// Capitalize the first letter of choices for better display
-	playerChoice := strings.Title(g.PlayerChoice)
-	computerChoice := strings.Title(g.ComputerChoice)
+	playerChoice := strings.ToUpper(g.PlayerChoice[:1]) + g.PlayerChoice[1:]
+	computerChoice := strings.ToUpper(g.ComputerChoice[:1]) + g.ComputerChoice[1:]
 
-	if g.Winner == "draw" {
+	switch g.Winner {
+	case "draw":
 		return fmt.Sprintf("Draw! Player (%s) - CPU (%s)", playerChoice, computerChoice)
-	} else if g.Winner == "player" {
+	case "player":
 		return fmt.Sprintf("Player (%s) beats CPU (%s)", playerChoice, computerChoice)
-	} else {
+	default:
 		return fmt.Sprintf("Player (%s) loses to CPU (%s)", playerChoice, computerChoice)
 	}
 }
@@ -181,12 +181,12 @@ func PlayGame(prompter Prompter, secretMode bool) {
 
 	for !game.GameOver {
 		fmt.Printf("\nCurrent score - Player: %d, Computer: %d\n", game.PlayerScore, game.ComputerScore)
-		
+
 		options := standardOptions
 		if secretMode {
 			options = secretOptions
 		}
-		
+
 		// Get player choice using prompter
 		playerChoiceIndex, err := prompter.Select("Choose your move", "rock", options)
 		if err != nil {
@@ -209,8 +209,8 @@ func PlayGame(prompter Prompter, secretMode bool) {
 // parseInt safely converts a string to an integer
 func parseInt(s string) int {
 	val := 3 // Default value
-	fmt.Sscanf(s, "%d", &val)
-	if val <= 0 {
+	_, err := fmt.Sscanf(s, "%d", &val)
+	if err != nil || val <= 0 {
 		return 3
 	}
 	if val%2 == 0 {

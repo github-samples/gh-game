@@ -6,12 +6,16 @@ import (
 	"testing"
 )
 
+// mockPrompter implements the Prompter interface for tictactoe game testing.
+// It provides predefined select responses and can be configured to return errors.
 type mockPrompter struct {
-	selectAnswers []int
-	selectIndex   int
-	selectError   error
+	selectAnswers []int // Predefined responses for Select calls
+	selectIndex   int   // Current index in selectAnswers
+	selectError   error // Error to be returned by Select
 }
 
+// Select implements the Prompter interface by returning either the configured error
+// or a predefined answer from selectAnswers. It advances selectIndex after each call.
 func (m *mockPrompter) Select(prompt string, defaultValue string, options []string) (int, error) {
 	if m.selectError != nil {
 		return 0, m.selectError
@@ -24,39 +28,54 @@ func (m *mockPrompter) Select(prompt string, defaultValue string, options []stri
 	return answer, nil
 }
 
-// mockGame implements GameInterface for testing
+// mockGame implements GameInterface for testing purposes.
+// It allows controlling the available positions returned for tests.
 type mockGame struct {
-	positions []string
+	positions []string // The positions to be returned by GetAvailablePositions
 }
 
+// GetAvailablePositions implements GameInterface by returning the
+// preconfigured positions for testing.
 func (m *mockGame) GetAvailablePositions() []string {
 	return m.positions
 }
 
 // Helper functions
-func setupGameWithMoves(moves [][2]int) *Game {
+
+// setupGameWithMoves creates a new game and plays a sequence of moves on it.
+// This is used to setup test scenarios with specific board states.
+// It fails the test if any of the moves are invalid.
+func setupGameWithMoves(moves [][2]int, t *testing.T) *Game {
 	game := NewGame(LocalGame)
 	for _, move := range moves {
-		game.MakeMove(move[0], move[1])
+		if err := game.MakeMove(move[0], move[1]); err != nil {
+			// In test setup we expect all moves to be valid
+			t.Fatalf("setupGameWithMoves: failed to make move %v: %v", move, err)
+		}
 	}
 	return game
 }
 
-func createFullBoard() *Game {
+// createFullBoard creates a game with a completely filled board.
+// This is useful for testing tie scenarios and board validation.
+func createFullBoard(t *testing.T) *Game {
 	moves := [][2]int{
 		{0, 0}, {0, 1}, {0, 2},
 		{1, 0}, {1, 1}, {1, 2},
 		{2, 0}, {2, 1}, {2, 2},
 	}
-	return setupGameWithMoves(moves)
+	return setupGameWithMoves(moves, t)
 }
 
+// gameTestCase defines a test case structure for game-related tests.
+// It contains the test name, a sequence of moves to execute, the expected
+// resulting board state, any expected error, and the expected current player.
 type gameTestCase struct {
-	name          string
-	moves         [][2]int
-	expectedBoard [][]string
-	expectedError string
-	currentPlayer string
+	name          string     // Name of the test case
+	moves         [][2]int   // Sequence of row,column moves to make
+	expectedBoard [][]string // Expected board state after moves
+	expectedError string     // Expected error message, empty if no error expected
+	currentPlayer string     // Expected current player after moves
 }
 
 func TestNewGame(t *testing.T) {
@@ -236,7 +255,9 @@ func TestGetWinner(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			game := NewGame(LocalGame)
 			for _, move := range tt.moves {
-				game.MakeMove(move[0], move[1])
+				if err := game.MakeMove(move[0], move[1]); err != nil {
+					t.Fatalf("Failed to make move %v: %v", move, err)
+				}
 			}
 			if winner := game.GetWinner(); winner != tt.expected {
 				t.Errorf("Expected winner %s, got %s", tt.expected, winner)
@@ -323,7 +344,9 @@ func TestGetPlayerMove(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			game := NewGame(LocalGame)
 			for _, move := range tt.boardState {
-				game.MakeMove(move[0], move[1])
+				if err := game.MakeMove(move[0], move[1]); err != nil {
+					t.Fatalf("Failed to make move %v: %v", move, err)
+				}
 			}
 			mockP := &mockPrompter{
 				selectAnswers: tt.selectAnswers,
@@ -357,7 +380,7 @@ func TestGetPlayerMoveErrors(t *testing.T) {
 	}{
 		{
 			name:          "full board returns error",
-			game:          createFullBoard(),
+			game:          createFullBoard(t),
 			selectAnswers: []int{0},
 			expectedError: "no available moves",
 		},
@@ -549,7 +572,7 @@ func TestGetAvailablePositions(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			game := setupGameWithMoves(tt.moves)
+			game := setupGameWithMoves(tt.moves, t)
 			positions := game.GetAvailablePositions()
 
 			if len(positions) != tt.expectedCount {
@@ -604,7 +627,7 @@ func TestString(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			game := setupGameWithMoves(tt.moves)
+			game := setupGameWithMoves(tt.moves, t)
 			board := game.String()
 
 			// Check that expected position numbers are present
