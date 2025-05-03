@@ -2,11 +2,45 @@
 
 A GitHub CLI extension that allows you to play games through the GitHub CLI.
 
+## Features
+
+- **Multiple Games**: Play coin toss, higher or lower, rock paper scissors, tic tac toe, and word guess games
+- **Terminal-Based**: Fully playable through your terminal using GitHub CLI
+- **Interactive UI**: User-friendly terminal interfaces for all games
+- **Score Tracking**: Keep track of your scores and streaks in supported games
+
+## Background
+
+The gh-game extension serves as both a fun diversion and a showcase of GitHub CLI extension capabilities.
+
+### Roadmap
+
+- Additional games to be added in the future
+
 ## Installation
 
 ```sh
-gh extension install chrisreddington/gh-game
+gh extension install github-samples/gh-game
 ```
+
+## Requirements
+
+- Go 1.23 or newer
+- GitHub CLI installed
+- Terminal with Unicode support for optimal experience
+
+### Setting Up Development Environment
+
+1. Clone the repository
+2. Run `go build` to build the extension
+3. Run `go test ./...` to run the tests
+
+### Development Container
+
+This project includes a [development container configuration](.devcontainer/devcontainer.json) for VS Code, which provides a consistent development environment with:
+- Go 1.23
+- GitHub CLI
+- Several VS Code extensions for GitHub
 
 ## Commands
 
@@ -70,29 +104,13 @@ gh game wordguess
 
 The game selects a random GitHub-related term, and you need to guess it by suggesting one letter at a time. Each correct letter is revealed in its position. Each incorrect guess reduces your remaining guesses. You win by guessing the complete word before making 6 incorrect guesses.
 
-## Development
-
-### Prerequisites
-
-- Go 1.23 or newer
-- GitHub CLI installed
-
-### Building from source
-
-1. Clone the repository
-2. Run `go build` to build the extension
-3. Run `go test ./...` to run the tests
-
-### Development Container
-
-This project includes a [development container configuration](.devcontainer/devcontainer.json) for VS Code, which provides a consistent development environment with:
-- Go 1.23
-- GitHub CLI
-- Several VS Code extensions for GitHub
-
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please feel free to submit a Pull Request. Check out our [contributing guidelines](CONTRIBUTING.md) for more details on how to get involved.
+
+## Maintainers
+
+This project is maintained by the GitHub Developer Relations team. See [CODEOWNERS](CODEOWNERS) file for specific maintainers.
 
 ## License
 
