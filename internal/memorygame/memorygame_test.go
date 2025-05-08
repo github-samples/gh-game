@@ -93,6 +93,29 @@ func TestIsGameOver(t *testing.T) {
 	}
 }
 
+func TestNextRound(t *testing.T) {
+	tests := []struct {
+		name           string
+		initialRound   int
+		expectedRound  int
+	}{
+		{"increment from round 1", 1, 2},
+		{"increment from round 5", 5, 6},
+		{"increment from round 99", 99, 100},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			game := NewGame(3)
+			game.CurrentRound = tt.initialRound
+			game.NextRound()
+			if game.CurrentRound != tt.expectedRound {
+				t.Errorf("NextRound() round = %v, want %v", game.CurrentRound, tt.expectedRound)
+			}
+		})
+	}
+}
+
 func TestFailFastOnWrongColor(t *testing.T) {
 	game := NewGame(2)
 	game.Sequence = []Color{Red, Blue, Green}
