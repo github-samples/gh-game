@@ -96,6 +96,17 @@ func runMemoryGame() {
 			userSequence := make([]memorygame.Color, 0, len(game.Sequence))
 			failed := false
 			for i := 0; i < len(game.Sequence); i++ {
+				// Display current sequence on a single line
+				fmt.Print("Current sequence: ")
+				for j := 0; j < len(userSequence); j++ {
+					cstr := string(userSequence[j])
+					if len(cstr) > 0 {
+						cstr = strings.ToUpper(cstr[:1]) + cstr[1:]
+					}
+					fmt.Print(colorStyles[userSequence[j]].Render(cstr) + " ")
+				}
+				fmt.Print("\n")
+
 				prompt := fmt.Sprintf("Color %d:", i+1)
 				idx, err := prompter.Select(prompt, colorOptions[0], colorOptions)
 				if err != nil {
@@ -104,6 +115,12 @@ func runMemoryGame() {
 				}
 				picked := colorMap[colorOptions[idx]]
 				userSequence = append(userSequence, picked)
+
+				// Clear screen and redisplay with updated sequence
+				clearScreen()
+				fmt.Printf("Round %d - Lives: %d\n\n", game.CurrentRound, game.Lives)
+				fmt.Println("Select the sequence in order using the menu.")
+
 				if picked != game.Sequence[i] {
 					game.DecrementLives()
 					if game.IsGameOver() {
